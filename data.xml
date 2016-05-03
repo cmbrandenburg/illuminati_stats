@@ -1,0 +1,212 @@
+<?xml version="1.0"?>
+<!-- vim: set noet ts=2 sw=2: -->
+
+<games>
+
+	<game>
+		<winner>
+			<name>Laura</name>
+			<group>The Gnomes of Zurich</group>
+			<win-type><basic/></win-type>
+		</winner>
+		<loser>
+			<name>Craig</name>
+			<group>The UFOs</group>
+		</loser>
+		<loser>
+			<name>Nick</name>
+			<group>The Network</group>
+		</loser>
+		<loser>
+			<name>Matt</name>
+			<group>The Society of Assassins</group>
+		</loser>
+		<loser>
+			<name>Alex</name>
+			<group>The Servants of Cthulhu</group>
+			<killed-by>Craig</killed-by>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Rich</name>
+			<group>The Servants of Cthulhu</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Craig</name>
+			<group>The Bermuda Triangle</group>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The UFOs</group>
+		</loser>
+		<loser>
+			<name>Nick</name>
+			<group>The Bavarian Illuminati</group>
+		</loser>
+		<loser>
+			<name>Jace</name>
+			<group>The Society of Assassins</group>
+		</loser>
+		<loser>
+			<name>Jill</name>
+			<group>The Gnomes of Zurich</group>
+		</loser>
+		<loser>
+			<name>Rick</name>
+			<group>The Network</group>
+			<killed-by>Jace</killed-by>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Laura</name>
+			<group>The Society of Assassins</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Craig</name>
+			<group>The Network</group>
+		</loser>
+		<loser>
+			<name>Jace</name>
+			<group>The Bermuda Triangle</group>
+		</loser>
+		<loser>
+			<name>Rick</name>
+			<group>The Servants of Cthulhu</group>
+			<killed-by>Craig</killed-by>
+		</loser>
+		<loser>
+			<name>Rich</name>
+			<group>The Gnomes of Zurich</group>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Rick</name>
+			<group>The Discordian Society</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Craig</name>
+			<group>The Servants of Cthulhu</group>
+		</loser>
+		<loser>
+			<name>Dave</name>
+			<group>The Bermuda Triangle</group>
+			<abandoned/>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The Bavarian Illuminati</group>
+		</loser>
+		<loser>
+			<name>Rich</name>
+			<group>The UFOs</group>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Craig</name>
+			<group>The UFOs</group>
+			<win-type>
+				<special>The Gnomes of Zurich</special>
+			</win-type>
+		</winner>
+		<loser>
+			<name>Robin</name>
+			<group>The Bermuda Triangle</group>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The Servants of Cthulhu</group>
+		</loser>
+		<loser>
+			<name>Rich</name>
+			<group>The Society of Assassins</group>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Mitchell</name>
+			<group>The Discordian Society</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Craig</name>
+			<group>The UFOs</group>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The Servants of Cthulhu</group>
+		</loser>
+		<loser>
+			<name>Jace</name>
+			<group>The Bermuda Triangle</group>
+		</loser>
+		<loser>
+			<name>Rick</name>
+			<group>The Bavarian Illuminati</group>
+		</loser>
+	</game>
+
+	<game>
+		<loser>
+			<name>Laura</name>
+			<group>The Bavarian Illuminati</group>
+		</loser>
+		<loser>
+			<name>Seve</name>
+			<group>The Servants of Cthulhu</group>
+		</loser>
+		<loser>
+			<name>Craig</name>
+			<group>The Society of Assassins</group>
+		</loser>
+		<loser>
+			<name>Lisa</name>
+			<group>The Discordian Society</group>
+		</loser>
+		<winner>
+			<name>Rich</name>
+			<group>The Bermuda Triangle</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Brewster</name>
+			<group>The Network</group>
+		</loser>
+	</game>
+
+	<game>
+		<winner>
+			<name>Dave</name>
+			<group>The Gnomes of Zurich</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Nick</name>
+			<group>The Bavarian Illuminati</group>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The Society of Assassins</group>
+		</loser>
+		<loser>
+			<name>Craig</name>
+			<group>The Network</group>
+		</loser>
+		<loser>
+			<name>Jace</name>
+			<group>The UFOs</group>
+		</loser>
+	</game>
+
+</games>

@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+
+import fractions
+import xml.dom.minidom
+
+class Game:
+	def __init__(self):
+		self.abandons = []
+		self.groupByPlayerName = {}
+		self.kills = []
+		self.losers = []
+		self.players = []
+		self.winners = []
+		self.winTypeByPlayerName = {}
+
+class Group:
+	def __init__(self, name):
+		self.name = name
+		self.numAdjustedPoints = 0
+		self.numGames = 0
+		self.numPoints = 0
+		self.numWins = 0
+
+class Kill:
+	def __init__(self, killer, killee):
+		self.killer = killer
+		self.killee = killee
+
+class Player:
+	def __init__(self, name):
+		self.name = name
+		self.numAbandons = 0
+		self.numAdjustedPoints = 0
+		self.numGames = 0
+		self.numKilled = 0
+		self.numKills = 0
+		self.numPoints = 0
+		self.numWins = 0
+
+class WinType:
+	def __init__(self, special, ufoSpecial = None):
+		self.special = special
+		self.ufoSpecial = ufoSpecial
+	def humanString(self):
+		if not self.special:
+			return 'the <strong>Basic Goal</strong>'
+		if not self.ufoSpecial:
+			return 'their <strong>Special Goal</strong>'
+		return 'the <strong>Special Goal of %s</strong>' % self.ufoSpecial
+
+def catSeries(items):
+	if len(items) == 0:
+		return ''
+	if len(items) == 1:
+		return items[0]
+	if len(items) == 2:
+		return '%s and %s' % (items[0], items[1])
+	o = ''
+	for i in range(len(items)):
+		item = items[i]
+		o += item
+		if i <= len(items) - 2:
+			o += ', '
+			if i == len(items) - 2:
+				o += 'and '
+	return o
+
+def formatHtml(players, groups, games):
+	numLosers = 0
+	numWinners = 0
+	for g in games:
+		numWinners += len(g.winners)
+		numLosers += len(g.players) - len(g.winners)
+	sortedPlayers = list(players.values())
+	sortedPlayers.sort(
+			key=lambda x: (x.numPoints, x.numWins, x.numGames, x.numKills, x.name),
+			reverse=True)
+	sortedGroups = list(groups.values())
+	sortedGroups.sort(key=lambda x: x.name)
+	maxPlayerAdjustedPoints = 0
+	maxPlayerGames = 0
+	maxPlayerKills = 0
+	maxPlayerPoints = 0
+	maxPlayerPPG = 0
+	maxPlayerWins = 0
+	for p in players.values():
+		if p.numAdjustedPoints >= maxPlayerAdjustedPoints:
+			maxPlayerAdjustedPoints = p.numAdjustedPoints
+		if p.numGames >= maxPlayerGames:
+			maxPlayerGames = p.numGames
+		if p.numKills >= maxPlayerKills:
+			maxPlayerKills = p.numKills
+		if p.numPoints >= maxPlayerPoints:
+			maxPlayerPoints = p.numPoints
+		ppg = fractions.Fraction(p.numPoints, p.numGames)
+		if ppg >= maxPlayerPPG:
+			maxPlayerPPG = ppg
+		if p.numWins >= maxPlayerWins:
+			maxPlayerWins = p.numWins
+	maxGroupGames = 0
+	maxGroupPoints = 0
+	maxGroupPPG = 0
+	maxGroupWins = 0
+	for g in groups.values():
+		if g.numGames >= maxGroupGames:
+			maxGroupGames = g.numGames
+		if g.numWins >= maxGroupWins:
+			maxGroupWins = g.numWins
+		if g.numPoints >= maxGroupPoints:
+			maxGroupPoints = g.numPoints
+		ppg = fractions.Fraction(g.numPoints, g.numGames)
+		if ppg >= maxGroupPPG:
+			maxGroupPPG = ppg
+	# style:
+	o = ''
+	o += '<style>\n'
+	o += ' .right {\n'
+	o += '  text-align: right;\n'
+	o += '  padding-left: 2em;\n'
+	o += ' }\n'
+	o += ' td.right{\n'
+	o += '  font-family: fixed;\n'
+	o += ' }\n'
+	o += ' .leader {\n'
+	o += '  font-weight: bold;\n'
+	o += ' }\n'
+	o += ' .even {\n'
+	o += '  background-color: white;\n'
+	o += ' }\n'
+	o += ' .odd {\n'
+	o += '  background-color: lightgray;\n'
+	o += ' }\n'
+	o += ' .table {\n'
+	o += '  border-collapse: collapse;\n'
+	o += '  margin-top: 1em;\n'
+	o += '  margin-bottom: 1em;\n'
+	o += ' }\n'
+	o += '</style>\n'
+	o += '\n'
+	# summary paragraph:
+	o += '<strong>Total:</strong> %d games, %d winners, %d losers.<br/>\n' % (len(games), numWinners, numLosers)
+	o += '\n'
+	# player table:
+	o += '<table border="0" class="table">\n'
+	o += ' <caption>Player standings</caption>\n'
+	o += ' <thead>\n'
+	o += '  <tr class="odd">\n'
+	o += '   <th>Player</th>\n'
+	o += '   <th class="right" title="Number of points earned in all games, cumulative">Pts</th>\n'
+	o += '   <th class="right" title="Number of games started">G</th>\n'
+	o += '   <th class="right" title="Number of games won, including shared wins">W</th>'
+	o += '   <th class="right" title="Average points per game">PPG</th>\n'
+	o += '   <th class="right" title="Number of adjusted points earned in all games, cumulative">AP</th>\n'
+	o += '   <th class="right" title="Number of kills made in all games, cumulative">K</th>\n'
+	o += '   <th class="right" title="Number of times killed or abandoned in all games, cumulative">X</th>\n'
+	o += '  </tr>\n'
+	o += ' </thead>\n'
+	o += ' <tbody>\n'
+	for i in range(len(sortedPlayers)):
+		p = sortedPlayers[i]
+		ppg = fractions.Fraction(p.numPoints, p.numGames)
+		o += '  <tr class="%s">\n' % ('even' if i % 2 == 0 else 'odd')
+		o += '   <td>%s</td>\n' % (p.name)
+		o += '   <td class="right%s">%d</td>\n' % ('' if p.numPoints < maxPlayerPoints else ' leader', p.numPoints)
+		o += '   <td class="right%s">%d</td>\n' % ('' if p.numGames < maxPlayerGames else ' leader', p.numGames)
+		o += '   <td class="right%s">%d</td>\n' % ('' if p.numWins < maxPlayerWins else ' leader', p.numWins)
+		o += '   <td class="right%s">%0.2f</td>\n' % ('' if ppg < maxPlayerPPG else ' leader', ppg)
+		o += '   <td class="right%s">%d</td>\n' % ('' if p.numAdjustedPoints < maxPlayerAdjustedPoints else ' leader',
+				p.numAdjustedPoints)
+		o += '   <td class="right%s">%d</td>\n' % ('' if p.numKills < maxPlayerKills else ' leader', p.numKills)
+		o += '   <td class="right">%d</td>\n' % (p.numAbandons + p.numKilled)
+		o += '  </tr>\n'
+	o += ' </tbody>\n'
+	o += '</table>\n'
+	o += '\n'
+	o += '<ul style="font-size:smaller;">\n'
+	o += '\n'
+	o += '<li>Points are awarded for winning games by the following formula:\n'
+	o += 'each win grants the winner the number of points equal to the number\n'
+	o += 'of players who started the game divided by the number of players who\n'
+	o += 'won. For example, if two players share victory in a game that\n'
+	o += 'started with 5 players, then each winner is awarded 2&frac12;\n'
+	o += 'points.</li>\n'
+	o += '\n'
+	o += '<li>Adjusted Points are awarded like regular points except\n'
+	o += 'that adjusted points take into account the number of players still\n'
+	o += 'in the game when the game finishes, not the number of players who\n'
+	o += 'started the game.\n'
+	o += '\n'
+	o += '<li>A kill is awarded to a player each time a player eliminates\n'
+	o += "another player from the game. Kills don't count for anything but\n"
+	o += "glory to, or condemnation of, one's viciousness.</li>\n"
+	o += '\n'
+	o += '</ul>\n'
+	o += '\n'
+	o += '<table border="0" class="table">\n'
+	o += ' <caption>Wins by Group</caption>\n'
+	o += ' <thead>\n'
+	o += '  <tr class="odd">\n'
+	o += '   <th>Group</th>\n'
+	o += '   <th class="right" title="Number of games started">G</th>\n'
+	o += '   <th class="right" title="Number of games won, including shared wins">W</th>'
+	o += '   <th class="right" title="Number of points earned in all games, cumulative">Pts</th>\n'
+	o += '   <th class="right" title="Average points per game">PPG</th>\n'
+	o += '  </tr>\n'
+	o += ' </thead>\n'
+	o += ' <tbody>\n'
+	for i in range(len(sortedGroups)):
+		g = sortedGroups[i]
+		o += '  <tr class="%s">\n' % ('even' if i % 2 == 0 else 'odd')
+		o += '   <td>%s</td>\n' % (g.name)
+		o += '   <td class="right%s">%d</td>\n' % ('' if g.numGames < maxGroupGames else ' leader', g.numGames)
+		o += '   <td class="right%s">%d</td>\n' % ('' if g.numWins < maxGroupWins else ' leader', g.numWins)
+		o += '   <td class="right%s">%d</td>\n' % ('' if g.numPoints < maxGroupPoints else ' leader', g.numPoints)
+		ppg = fractions.Fraction(g.numPoints, g.numGames)
+		o += '   <td class="right%s">%0.2f</td>\n' % ('' if ppg < maxGroupPPG else ' leader', ppg)
+		o += '  </tr>\n'
+	o += ' </tbody>\n'
+	o += '</table>\n'
+	o += '\n'
+	o += '<strong>Game summaries:</strong>\n'
+	o += '\n'
+	o += '<ul>\n'
+	o += '\n'
+	for g in games:
+		o += ' <li>'
+		for p in g.winners:
+			o += ' <strong>%s</strong> won with <strong>%s</strong> via %s.\n' % (p.name, g.groupByPlayerName[p.name].name,
+					g.winTypeByPlayerName[p.name].humanString())
+		#o += 'Other players: %s.\n' % catSeries(list(map(lambda x: x.name, g.losers)))
+		o += '</li>\n'
+		o += '\n'
+	o += '</ul>\n'
+	o += '\n'
+	o += '<strong>Related links:</strong>\n'
+	o += '\n'
+	o += '<ul>\n'
+	o += ' <li><a href="http://www.sjgames.com/illuminati/">Illuminati official website</a></li>\n'
+	o += '</ul>\n'
+	return o
+
+def main():
+	players, groups, games = parseData(open('data.xml').read())
+	print(formatHtml(players, groups, games))
+
+def parseData(xmlText):
+	def getGroup(node):
+		groupNodes = node.getElementsByTagName('group')
+		if len(groupNodes) != 1:
+			raise Exception('expected 1 group node, got %d' % len(groupNodes))
+		return groupNodes[0].firstChild.nodeValue
+	def getName(node):
+		nameNodes = node.getElementsByTagName('name')
+		if len(nameNodes) != 1:
+			raise Exception('expected 1 name node, got %d' % len(nameNodes))
+		return nameNodes[0].firstChild.nodeValue
+	def getWinType(node):
+		winTypeNodes = node.getElementsByTagName('win-type')
+		if len(winTypeNodes) != 1:
+			raise Exception('expected 1 win-type node, got %d' % len(winTypeNodes))
+		if len(winTypeNodes[0].getElementsByTagName('basic')) > 0:
+			return WinType(False)
+		specialNodes = winTypeNodes[0].getElementsByTagName('special')
+		if len(specialNodes) != 1:
+			raise Exception('expected 1 special node, got %d' % len(specialNodes))
+		if not specialNodes[0].firstChild:
+			return WinType(True) # non-UFO special victory
+		specialText = specialNodes[0].firstChild.nodeValue
+		if not specialText:
+			return WinType(True) # non-UFO special victory
+		return WinType(True, specialText) # UFO special victory
+	def groupFromName(name):
+		if name in groups:
+			return groups[name]
+		g = Group(name)
+		groups[name] = g
+		return g
+	def playerFromName(name):
+		if name in players:
+			return players[name]
+		p = Player(name)
+		players[name] = p
+		return p
+	# parse:
+	dom = xml.dom.minidom.parseString(xmlText)
+	games = []	
+	groups = {}
+	players = {}
+	for gameNode in dom.getElementsByTagName('game'):
+		nodeByPlayerName = {}
+		game = Game()
+		games.append(game)
+		winnerNodes = gameNode.getElementsByTagName('winner')
+		if len(winnerNodes) == 0:
+			raise Exception('game has no winner')
+		# winners:
+		for winnerNode in winnerNodes:
+			p = playerFromName(getName(winnerNode))
+			nodeByPlayerName[p.name] = winnerNode
+			game.players.append(p)
+			game.winners.append(p)
+			p.numGames += 1
+			p.numWins += 1
+			g = groupFromName(getGroup(winnerNode))
+			g.numGames += 1
+			g.numWins += 1
+			game.groupByPlayerName[p.name] = g
+			game.winTypeByPlayerName[p.name] = getWinType(winnerNode)
+		# losers:
+		for loserNode in gameNode.getElementsByTagName('loser'):
+			p = playerFromName(getName(loserNode))
+			nodeByPlayerName[p.name] = loserNode
+			game.players.append(p)
+			game.losers.append(p)
+			p.numGames += 1
+			g = groupFromName(getGroup(loserNode))
+			g.numGames += 1
+			game.groupByPlayerName[p.name] = g
+		# kills and abandons:
+		for p in game.players:
+			node = nodeByPlayerName[p.name]
+			killedByNodes = node.getElementsByTagName('killed-by')
+			if len(killedByNodes) > 0:
+				killer = playerFromName(killedByNodes[0].firstChild.nodeValue)
+				kill = Kill(killer, p)
+				game.kills.append(kill)
+				kill.killer.numKills += 1
+				kill.killee.numKilled += 1
+			if len(node.getElementsByTagName('abandoned')) > 0:
+				game.abandons.append(p)
+				p.numAbandons += 1
+		# points:
+		points = fractions.Fraction(len(game.players), len(game.winners))
+		adjustedPoints = fractions.Fraction(len(game.players) - len(game.abandons) - len(game.kills), len(game.winners))
+		for p in game.winners:
+			p.numPoints += points
+			p.numAdjustedPoints += adjustedPoints
+			g = game.groupByPlayerName[p.name]
+			g.numPoints += points
+			g.numAdjustedPoints += adjustedPoints
+	return players, groups, games
+
+if __name__ == '__main__':
+	main()
+
