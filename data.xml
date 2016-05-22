@@ -209,4 +209,30 @@
 		</loser>
 	</game>
 
+	<game>
+		<date>2016-05-21</date>
+		<loser>
+			<name>Craig</name>
+			<group>The Society of Assassins</group>
+		</loser>
+		<loser>
+			<name>Jace</name>
+			<group>The Bermuda Triangle</group>
+		</loser>
+		<loser>
+			<name>Laura</name>
+			<group>The Gnomes of Zurich</group>
+		</loser>
+		<winner>
+			<name>Mitchell</name>
+			<group>The Discordian Society</group>
+			<win-type><special/></win-type>
+		</winner>
+		<loser>
+			<name>Dave</name>
+			<group>The Bavarian Illuminati</group>
+			<killed-by>Craig</killed-by>
+		</loser>
+	</game>
+
 </games>
